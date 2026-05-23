@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Advanced — โจทย์ตัวอย่าง พร้อมอธิบายทีละขั้น</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="/static/libraries/chart.js/4.5.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', 'Noto Sans Thai', Helvetica, Arial, sans-serif;
+      overflow: hidden; background: #fff; color: #1d1d1f;
+    }
+
+    /* ── SLIDES ── */
+    .slide {
+      display: none; opacity: 0;
+      height: 100vh; width: 100vw;
+      position: absolute; top: 0; left: 0;
+      background: #FFFFFF;
+      flex-direction: column;
+      justify-content: flex-start; align-items: flex-start;
+      padding: 44px 80px 88px;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      transform: translateY(14px);
+      overflow-y: auto;
+    }
+    .slide.active { display: flex; opacity: 1; transform: translateY(0); }
+    .slide::-webkit-scrollbar { width: 4px; }
+    .slide::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px; z-index: 999;
+    }
+    .nav button {
+      background: #007AFF; color: #fff; border: none;
+      border-radius: 8px; padding: 9px 22px; font-size: 13px;
+      cursor: pointer; font-family: 'Helvetica Neue', sans-serif;
+      transition: background .2s;
+    }
+    .nav button:hover { background: #005ecb; }
+    .nav button:disabled { background: #c7c7cc; cursor: default; }
+    .counter {
+      font-size: 12px; color: #6e6e73;
+      font-family: 'Helvetica Neue', sans-serif;
+      min-width: 52px; text-align: center;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #007AFF;
+      font-family: 'Helvetica Neue', sans-serif; margin-bottom: 8px;
+    }
+    .slide-title {
+      font-size: 28px; font-weight: 700; color: #007AFF;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    .slide-bar { width: 44px; height: 4px; background: #007AFF; border-radius: 2px; margin-bottom: 24px; }
+
+    /* ── SCENARIO BOX ── */
+    .scenario {
+      width: 100%; background: #f0f6ff;
+      border-left: 5px solid #007AFF; border-radius: 0 12px 12px 0;
+      padding: 16px 22px; margin-bottom: 20px;
+    }
+    .scenario-label {
+      font-size: 11px; font-weight: 700; color: #007AFF;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      font-family: 'Helvetica Neue', sans-serif; margin-bottom: 6px;
+    }
+    .scenario p {
+      font-size: 15px; color: #1d1d1f;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.65;
+    }
+
+    /* ── DATA TABLE (visual) ── */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px; margin-bottom: 18px;
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 0 0 1.5px #e5e5ea;
+    }
+    .data-table th {
+      background: #007AFF; color: #fff; padding: 9px 14px;
+      text-align: left; font-family: 'Noto Sans Thai', sans-serif;
+      font-weight: 600; font-size: 12px;
+    }
+    .data-table td {
+      padding: 8px 14px; border-bottom: 1px solid #f0f0f5;
+      font-family: 'Noto Sans Thai', sans-serif; color: #1d1d1f;
+      font-size: 13px;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f5f8ff; }
+    .data-table .hl { background: #fff8e1; font-weight: 600; color: #b45309; }
+    .data-table .ans { background: #f0fdf4; font-weight: 700; color: #16a34a; }
+    .data-table .q { background: #fef3c7; color: #92400e; font-style: italic; }
+
+    /* ── FORMULA BREAKDOWN ── */
+    .formula-block {
+      width: 100%; background: #1d1d1f;
+      border-radius: 12px; padding: 18px 22px;
+      margin-bottom: 16px; position: relative;
+    }
+    .formula-block .fn-text {
+      font-family: 'Courier New', monospace; font-size: 15px;
+      color: #f5f5f7; line-height: 1.6; word-break: break-all;
+    }
+    .formula-block .fn-text .fn { color: #64d2ff; font-weight: 700; }
+    .formula-block .fn-text .req { color: #fff; }
+    .formula-block .fn-text .opt { color: #98989e; }
+    .formula-block .fn-text .val { color: #ffd60a; }
+    .formula-block .fn-text .cmt { color: #30d158; font-style: italic; font-size: 12px; }
+
+    /* ── BREAKDOWN STEPS ── */
+    .breakdown { width: 100%; margin-bottom: 16px; }
+    .breakdown-row {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f5;
+    }
+    .breakdown-row:last-child { border-bottom: none; }
+    .bk-num {
+      min-width: 28px; height: 28px; border-radius: 50%;
+      background: #007AFF; color: #fff; font-size: 13px;
+      font-weight: 700; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; margin-top: 1px;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+    .bk-param {
+      font-family: 'Courier New', monospace; font-size: 13px;
+      color: #007AFF; font-weight: 700; min-width: 140px; flex-shrink: 0;
+    }
+    .bk-desc {
+      font-size: 14px; color: #1d1d1f;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.6;
+    }
+    .bk-desc em { color: #6e6e73; font-style: normal; font-size: 12px; }
+
+    /* ── RESULT BOX ── */
+    .result-box {
+      display: flex; align-items: center; gap: 16px;
+      background: #f0fdf4; border: 1.5px solid #34C759;
+      border-radius: 12px; padding: 14px 20px; margin-top: 4px;
+    }
+    .result-icon { font-size: 24px; }
+    .result-label {
+      font-size: 11px; color: #6e6e73; font-family: 'Noto Sans Thai', sans-serif;
+    }
+    .result-value {
+      font-size: 17px; font-weight: 700; color: #16a34a;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── ERROR BOX ── */
+    .error-box {
+      display: flex; align-items: center; gap: 16px;
+      background: #fff1f2; border: 1.5px solid #FF3B30;
+      border-radius: 12px; padding: 14px 20px; margin-bottom: 14px;
+    }
+    .error-label { font-size: 12px; color: #6e6e73; font-family: 'Noto Sans Thai', sans-serif; }
+    .error-value { font-size: 15px; font-weight: 700; color: #FF3B30; font-family: 'Courier New', monospace; }
+
+    /* ── TWO COL ── */
+    .two-col { display: flex; gap: 32px; width: 100%; }
+    .col { flex: 1; }
+    .col-div { width: 1px; background: #e5e5ea; align-self: stretch; }
+
+    /* ── CARDS ── */
+    .cards-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; width: 100%; }
+    .card {
+      border: 1.5px solid #e5e5ea; border-radius: 12px;
+      padding: 20px 18px; background: #fff;
+    }
+    .card .card-title {
+      font-size: 14px; font-weight: 700; color: #1d1d1f;
+      font-family: 'Noto Sans Thai', sans-serif; margin-bottom: 10px;
+    }
+    .card .card-body {
+      font-size: 13px; color: #6e6e73;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.6;
+    }
+    .card .card-fn {
+      font-family: 'Courier New', monospace; font-size: 14px;
+      color: #007AFF; font-weight: 700; margin-bottom: 6px;
+    }
+    .tag {
+      display: inline-block; background: #e8f1ff; color: #007AFF;
+      font-size: 10px; font-weight: 700; border-radius: 4px;
+      padding: 2px 7px; margin-bottom: 8px;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+    .tag-warn {
+      background: #fff8e1; color: #b45309;
+    }
+    .tag-ok {
+      background: #f0fdf4; color: #16a34a;
+    }
+
+    /* ── NOTE ── */
+    .note {
+      width: 100%; background: #fafafa; border: 1px solid #e5e5ea;
+      border-radius: 10px; padding: 12px 18px; margin-top: 12px;
+      font-size: 13px; color: #6e6e73;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.6;
+    }
+    .note strong { color: #007AFF; font-family: 'Helvetica Neue', sans-serif; }
+
+    /* ── STEP LIST ── */
+    .steps { list-style: none; padding: 0; width: 100%; }
+    .steps li {
+      font-size: 15px; color: #1d1d1f; padding: 10px 0 10px 30px;
+      border-bottom: 1px solid #f0f0f5; position: relative;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.6;
+    }
+    .steps li::before {
+      content: attr(data-n);
+      position: absolute; left: 0; top: 10px;
+      font-size: 12px; font-weight: 700; color: #007AFF;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    /* ── CHART ── */
+    .chart-wrap { width: 100%; height: 310px; position: relative; }
+
+    /* ── COVER ── */
+    .cover-body {
+      display: flex; flex-direction: column; justify-content: center;
+      height: 100%; width: 100%; padding: 0 80px;
+    }
+    .cover-body h1 {
+      font-size: 40px; font-weight: 700; color: #007AFF;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.25;
+      margin-bottom: 18px;
+    }
+    .cover-body p {
+      font-size: 17px; color: #1d1d1f;
+      font-family: 'Noto Sans Thai', sans-serif; line-height: 1.7;
+    }
+    .cover-body .meta {
+      margin-top: 28px; font-size: 13px; color: #6e6e73;
+      font-family: 'Noto Sans Thai', sans-serif;
+    }
+    .cover-chips {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px;
+    }
+    .chip {
+      background: #e8f1ff; color: #007AFF; border-radius: 20px;
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+      font-family: 'Noto Sans Thai', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     SLIDE 1 — COVER
+══════════════════════════════════ -->
+<div class="slide active" id="s1" style="justify-content:center;">
+  <div class="cover-body" style="padding:0;">
+    <div class="eyebrow">9Expert Training · Excel Advanced · Version 33</div>
+    <h1>โจทย์ตัวอย่าง<br>พร้อมอธิบายทีละขั้นตอน</h1>
+    <p>สำหรับผู้ที่เข้าใจพื้นฐาน แต่ยังมองไม่เห็นภาพ<br>ว่าสูตรแต่ละตัวควรใช้เมื่อไหร่ และทำงานอย่างไร</p>
+    <div class="cover-chips">
+      <div class="chip">TEXTBEFORE / TEXTAFTER</div>
+      <div class="chip">XLOOKUP</div>
+      <div class="chip">VLOOKUP + IFERROR</div>
+      <div class="chip">IFS + AND</div>
+      <div class="chip">COUNTIFS / SUMIFS</div>
+      <div class="chip">MATCH + INDEX</div>
+      <div class="chip">UNIQUE + FILTER</div>
+      <div class="chip">VSTACK</div>
+      <div class="chip">LAMBDA</div>
+    </div>
+    <div class="meta">แต่ละ Slide = 1 โจทย์ · ข้อมูลจริง · อ่านแล้วใช้งานได้ทันที</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 2 — TEXTBEFORE / TEXTAFTER
+══════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="eyebrow">Text Functions · โจทย์ที่ 1</div>
+  <div class="slide-title">แยกชื่อ–นามสกุลออกจากข้อความเดียว</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ระบบ HR จัดเก็บข้อมูลพนักงานในรูปแบบ <strong>"Ms.Nancy Davolio"</strong> รวมกันใน Cell เดียว<br>
+    ต้องการแยก <strong>ชื่อ</strong> ออกมาใส่คอลัมน์ C และแยก <strong>นามสกุล</strong> ออกมาใส่คอลัมน์ D</p>
+  </div>
+
+  <table class="data-table" style="margin-bottom:14px;">
+    <thead><tr><th>A: EmployeeCode</th><th>B: FullName</th><th>C: FirstName (ต้องการ)</th><th>D: LastName (ต้องการ)</th></tr></thead>
+    <tbody>
+      <tr><td>46124</td><td>Ms.Nancy Davolio</td><td class="ans">=TEXTBEFORE(B2," ")</td><td class="ans">=TEXTAFTER(B2," ")</td></tr>
+      <tr><td>46180</td><td>Dr.Andrew Fuller</td><td>Dr.Andrew</td><td>Fuller</td></tr>
+      <tr><td>49118</td><td>Ms.Janet Leverling</td><td>Ms.Janet</td><td>Leverling</td></tr>
+    </tbody>
+  </table>
+
+  <div class="two-col">
+    <div class="col">
+      <div class="formula-block">
+        <div class="fn-text">
+          <span class="fn">TEXTBEFORE</span>(<span class="val">"Ms.Nancy Davolio"</span>, <span class="val">" "</span>)<br>
+          <span class="cmt">// ดึงข้อความ "ก่อน" ช่องว่าง</span>
+        </div>
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <div class="bk-num">1</div>
+          <div class="bk-param">text</div>
+          <div class="bk-desc">B2 = "Ms.Nancy Davolio" — ข้อความต้นทาง</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="bk-num">2</div>
+          <div class="bk-param">delimiter</div>
+          <div class="bk-desc">" " (ช่องว่าง) — ตำแหน่งที่ใช้แบ่ง</div>
+        </div>
+      </div>
+      <div class="result-box">
+        <div class="result-icon">✓</div>
+        <div>
+          <div class="result-label">ผลลัพธ์</div>
+          <div class="result-value">Ms.Nancy</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div class="formula-block">
+        <div class="fn-text">
+          <span class="fn">TEXTAFTER</span>(<span class="val">"Ms.Nancy Davolio"</span>, <span class="val">" "</span>)<br>
+          <span class="cmt">// ดึงข้อความ "หลัง" ช่องว่าง</span>
+        </div>
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <div class="bk-num">1</div>
+          <div class="bk-param">text</div>
+          <div class="bk-desc">B2 = "Ms.Nancy Davolio" — ข้อความต้นทาง</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="bk-num">2</div>
+          <div class="bk-param">delimiter</div>
+          <div class="bk-desc">" " (ช่องว่าง) — ตำแหน่งที่ใช้แบ่ง</div>
+        </div>
+      </div>
+      <div class="result-box">
+        <div class="result-icon">✓</div>
+        <div>
+          <div class="result-label">ผลลัพธ์</div>
+          <div class="result-value">Davolio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><strong>ข้อควรรู้:</strong> ทั้ง 2 ฟังก์ชันรองรับเฉพาะ Microsoft 365 เท่านั้น — หากใช้ Excel เวอร์ชันเก่าให้ใช้ RIGHT() + SEARCH() แทน</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 3 — XLOOKUP
+══════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="eyebrow">Lookup Functions · โจทย์ที่ 2</div>
+  <div class="slide-title">ค้นหาราคาสินค้าจากรหัส — XLOOKUP</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>มีตาราง Products ที่ Sheet Products และต้องการดึง <strong>ชื่อสินค้า + ราคา</strong> มาแสดงที่ Sheet หน้า Dashboard<br>
+    โดยกรอกแค่ <strong>รหัสสินค้า "2-113"</strong> ในช่อง G3 แล้วให้ Excel หาข้อมูลให้อัตโนมัติ</p>
+  </div>
+
+  <div class="two-col" style="margin-bottom:16px;">
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:#6e6e73;margin-bottom:6px;font-family:'Helvetica Neue',sans-serif;">Sheet: Products (ข้อมูลต้นทาง)</div>
+      <table class="data-table">
+        <thead><tr><th>B: Product Code</th><th>C: Product</th><th>D: Unit Price</th></tr></thead>
+        <tbody>
+          <tr><td>1-189</td><td>Steeleye Stout</td><td>21.05</td></tr>
+          <tr><td>1-190</td><td>Ipoh Coffee</td><td>22.00</td></tr>
+          <tr><td>2-101</td><td>Northwoods Cranberry</td><td>21.35</td></tr>
+          <tr class="hl"><td><strong>2-113</strong></td><td>Aniseed Syrup</td><td>19.45</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:#6e6e73;margin-bottom:6px;font-family:'Helvetica Neue',sans-serif;">Sheet: Dashboard (ต้องการผลลัพธ์)</div>
+      <table class="data-table">
+        <thead><tr><th>G3: รหัสที่กรอก</th><th>H4: Product (ผลลัพธ์)</th><th>H5: Unit Price (ผลลัพธ์)</th></tr></thead>
+        <tbody>
+          <tr class="ans"><td><strong>2-113</strong></td><td>Aniseed Syrup</td><td>19.45</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="formula-block">
+    <div class="fn-text">
+      <span class="cmt">// หา ชื่อสินค้า</span><br>
+      H4 = <span class="fn">XLOOKUP</span>(<span class="val">G3</span>, <span class="val">B3:B10</span>, <span class="val">C3:C10</span>)<br><br>
+      <span class="cmt">// หา ราคา</span><br>
+      H5 = <span class="fn">XLOOKUP</span>(<span class="val">G3</span>, <span class="val">B3:B10</span>, <span class="val">D3:D10</span>)
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">lookup_value</div>
+      <div class="bk-desc">G3 = "2-113" — ค่าที่ต้องการค้นหา (รหัสสินค้าที่กรอก)</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">lookup_array</div>
+      <div class="bk-desc">B3:B10 — คอลัมน์รหัสสินค้า (คอลัมน์ที่จะ "ค้นหาใน")</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">3</div>
+      <div class="bk-param">return_array</div>
+      <div class="bk-desc">C3:C10 หรือ D3:D10 — คอลัมน์ที่ต้องการดึงค่ากลับมา</div>
+    </div>
+  </div>
+  <div class="note"><strong>ทำไม XLOOKUP ดีกว่า VLOOKUP:</strong> ไม่ต้องนับลำดับคอลัมน์ · ค้นหาจากซ้าย/ขวาได้ · ใส่ค่า if_not_found ได้ในตัว</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 4 — XLOOKUP + VSTACK (ข้ามหลาย Sheet)
+══════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="eyebrow">Lookup Functions · โจทย์ที่ 3</div>
+  <div class="slide-title">ค้นหาข้อมูลลูกค้าจาก 3 Sheet พร้อมกัน — XLOOKUP + VSTACK</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ข้อมูลลูกค้าถูกแยกเก็บไว้ใน 3 Sheet คือ <strong>Europe / America / Asia</strong><br>
+    ที่ Sheet Orders มีรหัสลูกค้า เช่น "VINET" และต้องการรู้ว่า <strong>VINET อยู่ประเทศอะไร</strong></p>
+  </div>
+
+  <div class="formula-block" style="margin-bottom:14px;">
+    <div class="fn-text">
+      H2 = <span class="fn">XLOOKUP</span>(<br>
+      &nbsp;&nbsp;<span class="val">C2</span>,&nbsp;<span class="cmt">// lookup_value = รหัสลูกค้าจาก Sheet Orders</span><br>
+      &nbsp;&nbsp;<span class="fn">VSTACK</span>(<span class="val">Europe!A:A</span>, <span class="val">America!A:A</span>, <span class="val">Asia!A:A</span>),&nbsp;<span class="cmt">// lookup_array = รวม 3 Sheet เป็น 1</span><br>
+      &nbsp;&nbsp;<span class="fn">VSTACK</span>(<span class="val">Europe!G:G</span>, <span class="val">America!G:G</span>, <span class="val">Asia!G:G</span>)&nbsp;<span class="cmt">// return_array = คอลัมน์ Country จาก 3 Sheet</span><br>
+      )
+    </div>
+  </div>
+
+  <div class="breakdown" style="margin-bottom:16px;">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">VSTACK(…)</div>
+      <div class="bk-desc">รวมคอลัมน์ A จากทั้ง 3 Sheet ให้เป็น 1 ชุดข้อมูลเดียวก่อน — XLOOKUP จะค้นหาในชุดนั้น</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">C2</div>
+      <div class="bk-desc">รหัสลูกค้า เช่น "VINET" ที่อยู่ใน Sheet Orders คอลัมน์ C</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">3</div>
+      <div class="bk-param">VSTACK ที่ 2</div>
+      <div class="bk-desc">รวมคอลัมน์ G (Country) จากทั้ง 3 Sheet — ให้ส่งค่า Country กลับมา</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col">
+      <div style="font-size:13px;font-weight:700;color:#1d1d1f;margin-bottom:8px;font-family:'Noto Sans Thai',sans-serif;">ตัวอย่างผลลัพธ์</div>
+      <table class="data-table">
+        <thead><tr><th>OrderID</th><th>CustomerID</th><th>Country (ผลลัพธ์)</th></tr></thead>
+        <tbody>
+          <tr class="ans"><td>22001</td><td>VINET</td><td>France</td></tr>
+          <tr><td>22002</td><td>TOMSP</td><td>Germany</td></tr>
+          <tr><td>22003</td><td>HANAR</td><td>Brazil</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div style="font-size:13px;font-weight:700;color:#1d1d1f;margin-bottom:8px;font-family:'Noto Sans Thai',sans-serif;">ทำไมถึงทำแบบนี้?</div>
+      <ul class="steps">
+        <li data-n="→">ถ้าค้นหาทีละ Sheet ต้องใช้ IF(IFERROR(...), IF(IFERROR(...), ...)) ซึ่งยาวมาก</li>
+        <li data-n="→">VSTACK รวม 3 Sheet เป็น Array เดียว ให้ XLOOKUP ค้นได้ในสูตรเดียว</li>
+        <li data-n="→">เมื่อเพิ่มข้อมูลใน Sheet ย่อย สูตรอัปเดตอัตโนมัติ</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 5 — VLOOKUP + IFERROR
+══════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="eyebrow">Lookup Functions · โจทย์ที่ 4</div>
+  <div class="slide-title">ค้นหาชื่อแผนก — VLOOKUP + IFERROR</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ตาราง Transaction มี <strong>DeptID</strong> แต่ไม่มีชื่อแผนก ต้องการดึงชื่อแผนกจาก Master Data มาแสดง<br>
+    และถ้ากรอก DeptID ผิด ไม่ให้แสดง #N/A แต่ให้แสดง <strong>"ไม่พบแผนก"</strong> แทน</p>
+  </div>
+
+  <div class="two-col" style="margin-bottom:14px;">
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:#6e6e73;margin-bottom:6px;font-family:'Helvetica Neue',sans-serif;">Master Data: Department</div>
+      <table class="data-table">
+        <thead><tr><th>J: DeptID</th><th>K: Department (EN)</th><th>L: Department (TH)</th></tr></thead>
+        <tbody>
+          <tr><td>Dep 1</td><td>Accounting</td><td>ฝ่ายบัญชี</td></tr>
+          <tr><td>Dep 2</td><td>Marketing</td><td>ฝ่ายการตลาด</td></tr>
+          <tr><td>Dep 3</td><td>Customer Service</td><td>ฝ่ายลูกค้าสัมพันธ์</td></tr>
+          <tr><td>Dep 4</td><td>IT</td><td>ฝ่ายสารสนเทศ</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:#6e6e73;margin-bottom:6px;font-family:'Helvetica Neue',sans-serif;">Transaction Table (ต้องการเติม)</div>
+      <table class="data-table">
+        <thead><tr><th>C: DeptID</th><th>D: Department (ต้องการ)</th></tr></thead>
+        <tbody>
+          <tr class="ans"><td>Dep 1</td><td>=IFERROR(VLOOKUP(C2,$J:$L,2,0),"ไม่พบแผนก")</td></tr>
+          <tr><td>Dep 2</td><td>Marketing</td></tr>
+          <tr class="q"><td>Dep 9</td><td>ไม่พบแผนก (ถ้าไม่มี IFERROR จะแสดง #N/A)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="formula-block">
+    <div class="fn-text">
+      D2 = <span class="fn">IFERROR</span>( <span class="fn">VLOOKUP</span>(<span class="val">C2</span>, <span class="val">$J:$L</span>, <span class="val">2</span>, <span class="val">0</span>), <span class="val">"ไม่พบแผนก"</span> )
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">C2</div>
+      <div class="bk-desc">lookup_value = DeptID ที่ต้องการหา เช่น "Dep 1"</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">$J:$L</div>
+      <div class="bk-desc">table_array = ช่วงข้อมูล Master Data ทั้งหมด (คอลัมน์ J ถึง L) — ใช้ $ เพื่อล็อกตำแหน่ง</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">3</div>
+      <div class="bk-param">2</div>
+      <div class="bk-desc">col_index_num = เอาคอลัมน์ที่ 2 ของ table_array (J=1, K=2) → ได้ Department (EN)</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">4</div>
+      <div class="bk-param">0</div>
+      <div class="bk-desc">range_lookup = 0/FALSE = ค้นหาแบบตรงเป๊ะเท่านั้น</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">5</div>
+      <div class="bk-param">IFERROR</div>
+      <div class="bk-desc">ครอบ VLOOKUP ไว้ — ถ้าหาไม่เจอ (#N/A) จะแสดง "ไม่พบแผนก" แทน</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 6 — IFS + AND (แจ้งเตือนสินค้า)
+══════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="eyebrow">Logic Functions · โจทย์ที่ 5</div>
+  <div class="slide-title">ตรวจสอบสินค้าที่ต้องสั่งซื้อ — IFS + AND</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ต้องการสร้างคอลัมน์ <strong>Reorder</strong> เพื่อระบุว่าสินค้าตัวไหนต้องสั่งซื้อเพิ่ม<br>
+    เงื่อนไข: ต้องสั่งซื้อ เมื่อ <strong>UnitsInStock ≤ ReorderLevel</strong> และ <strong>Status = "Active"</strong> เท่านั้น</p>
+  </div>
+
+  <table class="data-table" style="margin-bottom:14px;">
+    <thead><tr><th>J: UnitsInStock</th><th>K: ReorderLevel</th><th>L: Status</th><th>M: Reorder (ต้องการ)</th></tr></thead>
+    <tbody>
+      <tr><td>39</td><td>10</td><td>Active</td><td class="ans">0 (ยังไม่ต้องสั่ง — 39 &gt; 10)</td></tr>
+      <tr class="hl"><td>17</td><td>25</td><td>Active</td><td class="ans">1 (ต้องสั่ง! — 17 ≤ 25 และ Active)</td></tr>
+      <tr><td>20</td><td>0</td><td>Inactive</td><td>0 (ไม่ต้องสั่ง — Status ไม่ใช่ Active)</td></tr>
+      <tr class="hl"><td>15</td><td>30</td><td>Active</td><td class="ans">1 (ต้องสั่ง! — 15 ≤ 30 และ Active)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="formula-block">
+    <div class="fn-text">
+      M2 = <span class="fn">IFS</span>( <span class="fn">AND</span>(<span class="val">J2 &lt;= K2</span>, <span class="val">L2 = "Active"</span>), <span class="val">1</span>, <span class="val">TRUE</span>, <span class="val">0</span> )
+    </div>
+  </div>
+
+  <div class="breakdown" style="margin-bottom:12px;">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">AND(J2≤K2, L2="Active")</div>
+      <div class="bk-desc">เงื่อนไขที่ 1 — ต้องจริงทั้งคู่: สต็อกน้อยกว่าหรือเท่ากับระดับสั่งซื้อ <strong>และ</strong> สถานะต้องเป็น Active</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">1</div>
+      <div class="bk-desc">ค่าที่คืนเมื่อเงื่อนไข AND เป็น TRUE = 1 (หมายถึงต้องสั่งซื้อ)</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">3</div>
+      <div class="bk-param">TRUE, 0</div>
+      <div class="bk-desc">ค่า default — กรณีอื่นทั้งหมดให้คืน 0 (ไม่ต้องสั่งซื้อ)</div>
+    </div>
+  </div>
+  <div class="note"><strong>เคล็ดลับ:</strong> ใช้ผลลัพธ์เป็น 0/1 เพราะต้องนำไปตั้ง Conditional Formatting → Icon Sets ซึ่งต้องการตัวเลข ไม่ใช่ข้อความ</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 7 — IFS (ตัดเกรด)
+══════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="eyebrow">Logic Functions · โจทย์ที่ 6</div>
+  <div class="slide-title">ตัดเกรดนักเรียน + จัดการกรณีพิเศษ — IFS</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>มีตารางคะแนนนักเรียน ต้องการสร้างคอลัมน์ <strong>Grade</strong> โดยมีเงื่อนไขดังนี้:<br>
+    &lt;50 = F · &lt;60 = D · &lt;70 = C · &lt;80 = B · ≤100 = A · ถ้าช่องว่าง = ว่าง · ถ้ากรอกผิด = "กรอกไม่ถูก"</p>
+  </div>
+
+  <div class="formula-block" style="margin-bottom:14px;">
+    <div class="fn-text">
+      F2 = <span class="fn">IFS</span>(<br>
+      &nbsp;&nbsp;<span class="val">E2 = ""</span>, <span class="val">""</span>,&nbsp;<span class="cmt">// 1) ถ้าว่าง → คืนค่าว่าง</span><br>
+      &nbsp;&nbsp;<span class="val">E2 &lt; 50</span>, <span class="val">"F"</span>,&nbsp;<span class="cmt">// 2) น้อยกว่า 50 → F</span><br>
+      &nbsp;&nbsp;<span class="val">E2 &lt; 60</span>, <span class="val">"D"</span>,&nbsp;<span class="cmt">// 3) น้อยกว่า 60 → D</span><br>
+      &nbsp;&nbsp;<span class="val">E2 &lt; 70</span>, <span class="val">"C"</span>,&nbsp;<span class="cmt">// 4) น้อยกว่า 70 → C</span><br>
+      &nbsp;&nbsp;<span class="val">E2 &lt; 80</span>, <span class="val">"B"</span>,&nbsp;<span class="cmt">// 5) น้อยกว่า 80 → B</span><br>
+      &nbsp;&nbsp;<span class="val">E2 &lt;= 100</span>, <span class="val">"A"</span>,&nbsp;<span class="cmt">// 6) ≤100 → A</span><br>
+      &nbsp;&nbsp;<span class="val">TRUE</span>, <span class="val">"กรอกไม่ถูก"</span>&nbsp;<span class="cmt">// 7) อื่นๆ ทั้งหมด (เช่น 999)</span><br>
+      )
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>ชื่อ</th><th>E: คะแนน</th><th>F: เกรด (ผลลัพธ์)</th><th>เหตุผล</th></tr></thead>
+    <tbody>
+      <tr><td>Larry Munoz</td><td>49.0</td><td class="ans">F</td><td>49 &lt; 50 → F</td></tr>
+      <tr><td>Tristan</td><td>64.8</td><td class="ans">C</td><td>60 ≤ 64.8 &lt; 70 → C</td></tr>
+      <tr><td>Dennis</td><td>100.0</td><td class="ans">A</td><td>100 ≤ 100 → A</td></tr>
+      <tr><td>Kurt Pal</td><td>51.2</td><td class="ans">D</td><td>50 ≤ 51.2 &lt; 60 → D</td></tr>
+      <tr class="q"><td>Christine</td><td>(ว่าง)</td><td>""</td><td>เงื่อนไขแรก E2="" → คืนค่าว่าง</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>ข้อสังเกตสำคัญ:</strong> IFS ตรวจเงื่อนไขตามลำดับจากบนลงล่าง — ต้องเรียง &lt;50 ก่อน &lt;60 เสมอ ไม่เช่นนั้นคะแนน 45 จะผ่านเงื่อนไข &lt;60 ก่อนแล้วได้ D แทน F</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 8 — COUNTIFS / SUMIFS
+══════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="eyebrow">Summary Functions · โจทย์ที่ 7</div>
+  <div class="slide-title">นับสินค้าและสรุปยอดขาย — COUNTIFS &amp; SUMIFS</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ต้องการสร้าง Dashboard สรุปยอดขายโดยแยกตาม <strong>Category</strong><br>
+    1) นับจำนวนสินค้า Active ต่อ Category<br>
+    2) รวมยอดขายตาม Category + Country + ปี พร้อมกัน</p>
+  </div>
+
+  <div class="two-col" style="margin-bottom:14px;">
+    <div class="col">
+      <div class="tag">COUNTIFS — นับสินค้า Active</div>
+      <div class="formula-block">
+        <div class="fn-text" style="font-size:13px;">
+          F2 = <span class="fn">COUNTIFS</span>(<br>
+          &nbsp;&nbsp;<span class="val">PRODUCTS!$C$2:$C$78</span>, <span class="val">$E4</span>,<br>
+          &nbsp;&nbsp;<span class="cmt">// range1=คอลัมน์ Category, crit1=ชื่อ Category จาก E4</span><br>
+          &nbsp;&nbsp;<span class="val">PRODUCTS!$J$2:$J$78</span>, <span class="val">F$1</span><br>
+          &nbsp;&nbsp;<span class="cmt">// range2=คอลัมน์ Status, crit2=ชื่อสถานะจาก F1</span><br>
+          )
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>E: Category</th><th>F: Active</th><th>G: Inactive</th></tr></thead>
+        <tbody>
+          <tr><td>Beverages</td><td class="ans">11</td><td>1</td></tr>
+          <tr><td>Condiments</td><td class="ans">11</td><td>1</td></tr>
+          <tr><td>Seafood</td><td class="ans">12</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div class="tag">SUMIFS — รวมยอดขาย 3 เงื่อนไข</div>
+      <div class="formula-block">
+        <div class="fn-text" style="font-size:12px;">
+          F2 = <span class="fn">SUMIFS</span>(<br>
+          &nbsp;&nbsp;<span class="val">ORDERDETAILS[Total]</span>, <span class="cmt">// รวมคอลัมน์นี้</span><br>
+          &nbsp;&nbsp;<span class="val">ORDERDETAILS[Category]</span>, <span class="val">E2</span>,<br>
+          &nbsp;&nbsp;<span class="val">ORDERDETAILS[Country]</span>, <span class="val">$B$3</span>,<br>
+          &nbsp;&nbsp;<span class="val">ORDERDETAILS[Year]</span>, <span class="val">$B$2</span><br>
+          )
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Category</th><th>Total Sales</th></tr></thead>
+        <tbody>
+          <tr><td>Beverages</td><td class="ans">9,548.30</td></tr>
+          <tr><td>Confections</td><td class="ans">8,227.58</td></tr>
+          <tr><td>Seafood</td><td class="ans">10,399.73</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="note"><strong>ความแตกต่างที่ต้องจำ:</strong> COUNTIFS → "นับ" จำนวน Cell | SUMIFS → "รวม" ตัวเลข — และ sum_range ของ SUMIFS อยู่ <strong>หน้าสุด</strong> ต่างจาก SUMIF ที่อยู่ท้าย</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 9 — MATCH + INDEX
+══════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="eyebrow">Lookup Functions · โจทย์ที่ 8</div>
+  <div class="slide-title">ค้นหารหัสลูกค้าจากชื่อ — MATCH + INDEX</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>มีตารางลูกค้า ต้องการ <strong>หารหัสลูกค้า (CustomerID)</strong> จากชื่อบริษัท <strong>"Bon app'"</strong><br>
+    โดยที่รหัสอยู่คนละคอลัมน์กับชื่อ (รหัสอยู่ A, ชื่ออยู่ B)</p>
+  </div>
+
+  <div class="two-col" style="margin-bottom:14px;">
+    <div class="col">
+      <table class="data-table">
+        <thead><tr><th>A: CustomerID</th><th>B: CompanyName</th></tr></thead>
+        <tbody>
+          <tr><td>ALFKI</td><td>Alfreds Futterkiste</td></tr>
+          <tr><td>ANATR</td><td>Ana Trujillo Emparedados</td></tr>
+          <tr><td>BOLID</td><td>Bolido Comidas preparadas</td></tr>
+          <tr class="hl"><td><strong>BONAP</strong></td><td><strong>Bon app'</strong></td></tr>
+          <tr><td>BOTTM</td><td>Bottom-Dollar Markets</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-div"></div>
+    <div class="col">
+      <div style="font-size:13px;font-weight:700;color:#1d1d1f;margin-bottom:8px;font-family:'Noto Sans Thai',sans-serif;">วิธีคิด: ใช้ 2 ขั้นตอน</div>
+      <ul class="steps">
+        <li data-n="ขั้น 1">ใช้ <strong>MATCH</strong> หาว่า "Bon app'" อยู่แถวที่เท่าไหร่ → ได้ผลลัพธ์ <strong>10</strong></li>
+        <li data-n="ขั้น 2">นำเลขแถว 10 ไปใส่ใน <strong>INDEX</strong> เพื่อดึงค่าจากคอลัมน์ A แถวที่ 10 → ได้ <strong>BONAP</strong></li>
+        <li data-n="รวม">เขียนรวมกันใน 1 สูตร: INDEX ครอบ MATCH ไว้ภายใน</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="formula-block" style="margin-bottom:14px;">
+    <div class="fn-text">
+      E2 = <span class="fn">INDEX</span>(<span class="val">A:A</span>, <span class="fn">MATCH</span>(<span class="val">"Bon app'"</span>, <span class="val">B:B</span>, <span class="val">0</span>) )<br>
+      <span class="cmt">// MATCH หาว่า "Bon app'" อยู่แถวที่ 10 → INDEX ดึง A10 = BONAP</span>
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">MATCH("Bon app'", B:B, 0)</div>
+      <div class="bk-desc">ค้นหา "Bon app'" ใน Column B ด้วยการจับคู่แบบตรงเป๊ะ (0) → คืน <strong>10</strong> (แถวที่พบ)</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">INDEX(A:A, 10)</div>
+      <div class="bk-desc">ดึงค่าจาก Column A แถวที่ 10 → ได้ <strong>BONAP</strong></div>
+    </div>
+  </div>
+
+  <div class="result-box">
+    <div class="result-icon">✓</div>
+    <div>
+      <div class="result-label">ผลลัพธ์</div>
+      <div class="result-value">BONAP</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 10 — UNIQUE + SORT + FILTER
+══════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="eyebrow">Dynamic Array · โจทย์ที่ 9</div>
+  <div class="slide-title">สร้าง Dropdown ประเทศอัตโนมัติ — SORT + DROP + UNIQUE + FILTER</div>
+  <div class="slide-bar"></div>
+
+  <div class="scenario">
+    <div class="scenario-label">โจทย์</div>
+    <p>ต้องการสร้าง Dropdown รายชื่อประเทศจากตาราง Customers<br>
+    โดย <strong>ไม่ซ้ำ</strong>, <strong>เรียง A→Z</strong>, <strong>ไม่มีช่องว่าง</strong> และ <strong>อัปเดตอัตโนมัติ</strong> เมื่อเพิ่มลูกค้าใหม่</p>
+  </div>
+
+  <div class="formula-block" style="margin-bottom:14px;">
+    <div class="fn-text">
+      A7 = <span class="fn">SORT</span>(<br>
+      &nbsp;&nbsp;<span class="fn">DROP</span>(<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">UNIQUE</span>(<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">FILTER</span>(<span class="val">CUSTOMERS!G:G</span>, <span class="val">CUSTOMERS!G:G &lt;&gt; ""</span>)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// กรองเอาเฉพาะที่ไม่ใช่ช่องว่าง</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;),<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// หาค่าไม่ซ้ำ</span><br>
+      &nbsp;&nbsp;<span class="val">1</span>&nbsp;<span class="cmt">// ตัดแถวที่ 1 (Header) ออก</span><br>
+      &nbsp;&nbsp;)<br>
+      )<br>
+      <span class="cmt">// เรียง A→Z</span>
+    </div>
+  </div>
+
+  <div class="breakdown" style="margin-bottom:14px;">
+    <div class="breakdown-row">
+      <div class="bk-num">1</div>
+      <div class="bk-param">FILTER(...<>"")</div>
+      <div class="bk-desc">กรองเอาเฉพาะแถวที่มีข้อมูล — ตัด Cell ว่างทิ้งก่อน</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">2</div>
+      <div class="bk-param">UNIQUE(...)</div>
+      <div class="bk-desc">ดึงเฉพาะค่าที่ไม่ซ้ำกัน — ถ้ามีลูกค้า 50 คนจาก France จะเหลือแค่ "France" ค่าเดียว</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">3</div>
+      <div class="bk-param">DROP(..., 1)</div>
+      <div class="bk-desc">ตัดแถวแรก (Header "Country") ออก เพราะ FILTER ดึงมารวมด้วย</div>
+    </div>
+    <div class="breakdown-row">
+      <div class="bk-num">4</div>
+      <div class="bk-param">SORT(...)</div>
+      <div class="bk-desc">เรียง A→Z อัตโนมัติ ผลลัพธ์: Argentina → Austria → Belgium → Brazil → ...</div>
+    </div>
+  </div>
+
+  <div class="note"><strong>ใช้กับ Data Validation:</strong> ตั้ง Source = <code style="background:#f0f0f5;padding:2px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:12px;">=$A$7#</code> — เครื่องหมาย # หมายถึง "ทั้ง Spill Array" ดังนั้น Dropdown จะยาวขึ้น/สั้นลงอัตโนมัติตามจำนวนประเทศที่มีอยู่จริง</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 11 — CHART: โจทย์ไหนใช้สูตรอะไร
+══════════════════════════════════ -->
+<div class="slide" id="s11" style="justify-content:center;">
+  <div class="eyebrow">สรุปภาพรวม</div>
+  <div class="slide-title">โจทย์ไหนควรใช้ฟังก์ชันอะไร?</div>
+  <div class="slide-bar"></div>
+  <div class="chart-wrap">
+    <canvas id="matchChart"></canvas>
+  </div>
+  <div style="font-size:12px;color:#6e6e73;text-align:center;margin-top:8px;font-family:'Noto Sans Thai',sans-serif;">
+    ความถี่การใช้งานฟังก์ชันในงานจริงตามเนื้อหาหลักสูตร 9Expert Training Excel Advanced
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SLIDE 12 — อ้างอิง
+══════════════════════════════════ -->
+<div class="slide" id="s12" style="justify-content:center;">
+  <div class="eyebrow">แหล่งอ้างอิง</div>
+  <div class="slide-title">Sources</div>
+  <div class="slide-bar"></div>
+
+  <div class="cards-3">
+    <div class="card">
+      <div class="tag">เอกสารหลัก</div>
+      <div class="card-title">9Expert Training<br>Microsoft Excel Advanced</div>
+      <div class="card-body">Version 33 · Published 29 September 2025<br>จัดทำโดย สุรเดช ตัถยานุกูล<br>9Expert Co., Ltd.</div>
+    </div>
+    <div class="card">
+      <div class="tag">Case Studies</div>
+      <div class="card-title">โจทย์จากไฟล์ Case Study</div>
+      <div class="card-body">9EXPERT-OrderSystem-V33.xlsx<br>9EXPERT-Invoice-V33.xlsx<br>ข้อมูล EMPLOYEES · PRODUCTS · CUSTOMERS · ORDERS</div>
+    </div>
+    <div class="card">
+      <div class="tag">ทบทวนเพิ่มเติม</div>
+      <div class="card-title">YouTube &amp; บทความ</div>
+      <div class="card-body">youtube.com/9expert<br>9experttraining.com/articles<br>ติดต่อ: instructor@9expert.co.th<br>LINE OA: @9expert</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;width:100%;background:#f5f8ff;border-radius:12px;padding:20px 24px;display:flex;gap:48px;justify-content:center;">
+    <div style="text-align:center;">
+      <div style="font-size:36px;font-weight:700;color:#007AFF;font-family:'Helvetica Neue',sans-serif;">9</div>
+      <div style="font-size:12px;color:#6e6e73;font-family:'Noto Sans Thai',sans-serif;">โจทย์ทั้งหมด</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:36px;font-weight:700;color:#007AFF;font-family:'Helvetica Neue',sans-serif;">12</div>
+      <div style="font-size:12px;color:#6e6e73;font-family:'Noto Sans Thai',sans-serif;">Slides ทั้งหมด</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:36px;font-weight:700;color:#007AFF;font-family:'Helvetica Neue',sans-serif;">14</div>
+      <div style="font-size:12px;color:#6e6e73;font-family:'Noto Sans Thai',sans-serif;">ฟังก์ชันที่ใช้ในโจทย์</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<div class="nav">
+  <button id="btnPrev" onclick="go(-1)" disabled>← ก่อนหน้า</button>
+  <span class="counter" id="ctr">1 / 12</span>
+  <button id="btnNext" onclick="go(1)">ถัดไป →</button>
+</div>
+
+<script>
+  const TOTAL = 12;
+  let cur = 1;
+  let chartDone = false;
+
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(el => {
+      el.classList.remove('active');
+      el.style.display = 'none';
+    });
+    const el = document.getElementById('s' + n);
+    if (!el) return;
+    el.style.display = 'flex';
+    requestAnimationFrame(() => el.classList.add('active'));
+    document.getElementById('ctr').textContent = n + ' / ' + TOTAL;
+    document.getElementById('btnPrev').disabled = (n === 1);
+    document.getElementById('btnNext').disabled = (n === TOTAL);
+    if (n === 11 && !chartDone) { chartDone = true; setTimeout(buildChart, 150); }
+  }
+
+  function go(d) {
+    const next = cur + d;
+    if (next < 1 || next > TOTAL) return;
+    cur = next;
+    showSlide(cur);
+  }
+
+  let kd = false;
+  document.addEventListener('keydown', e => {
+    if (kd) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { go(1);  kd = true; setTimeout(()=>kd=false,450); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { go(-1); kd = true; setTimeout(()=>kd=false,450); }
+  });
+
+  let rt;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(()=>showSlide(cur), 200); });
+
+  function buildChart() {
+    const ctx = document.getElementById('matchChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['XLOOKUP','VLOOKUP\n+IFERROR','SUMIFS','COUNTIFS','IFS + AND','MATCH\n+INDEX','TEXTBEFORE\n/AFTER','UNIQUE\n+FILTER\n+SORT','VSTACK','LAMBDA'],
+        datasets: [{
+          label: 'ความถี่ในงานจริง (คะแนน)',
+          data: [95, 85, 90, 80, 88, 70, 75, 72, 68, 55],
+          backgroundColor: [
+            '#007AFF','#007AFF','#34C759','#34C759',
+            '#FF9500','#6e6e73','#6e6e73','#007AFF','#007AFF','#6e6e73'
+          ],
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ' ความถี่: ' + ctx.parsed.y + '/100'
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#1d1d1f', font: { size: 11 } }, grid: { display: false } },
+          y: { ticks: { color: '#6e6e73', font: { size: 11 } }, grid: { color: '#f0f0f5' }, max: 100 }
+        }
+      }
+    });
+  }
+
+  showSlide(1);
+</script>
+</body>
+</html>
